@@ -87,7 +87,7 @@ POST user/_create/1
     }
   ```
 + ## 全文查询(分词)
-  1. ### match查询(匹配查询)
+  1. ### match查询(匹配查询/模糊查询)
       `match`：模糊匹配，需要指定字段名，但是输入会进行分词，比如"hello world"会进行拆分为hello和world，然后匹配，如果字段中包含hello或者world，或者都包含的结果都会被查询出来，也就是说match是一个部分匹配的模糊查询。查询条件相对来说比较宽松。
       ```json
         GET user/_search
@@ -97,7 +97,175 @@ POST user/_create/1
           }
         }
       ```
+  2. ### match_phrase(短语查询)
+      `match_phrase`：会对输入做分词，但是需要结果中也包含所有的分词，而且顺序要求一样。以"hello world"为例，要求结果中必须包含hello和world，而且还要求他们是连着的，顺序也是固定的，hello that word不满足，world hello也不满足条件。
+      ```json
+        GET user/_search
+        {
+          "query":{
+            "match_phrase":{
+              "字段":"值"
+            }
+          }
+        }
+      ```
 
+  3. ### multi_match
+      `multi_match`：查询提供了一个简便的方法用来对多个字段执行相同的查询，即对指定的多个字段进行match查询
+      ```json
+      GET user/_search
+      {
+        "query":{
+          "multi_match":{
+            "query":"要查询的值",
+            "fields":["title","desc"]
+          }
+        }
+      }
+      ```
+  4. ### query_string
+      `query_string`：和match类似，但是match需要指定字段名，query_string是在所有字段中搜索，范围更广泛。
+      ```json
+      GET user/_search
+      {
+        "query":{
+          "query_string":{
+            "default_field":"查询字段",//默认查询字段可以不加 不加为全字段搜索
+            "query":"Madison AND street"//可以搭配AND 或者 OR 使用
+          }
+        }
+      }
+      ```
++ ## term级别的查询
+  1. ### term查询(不分词 直接拿输入的值查询)
+      `term`:  这种查询和match在有些时候是等价的，比如我们查询单个的词hello，那么会和match查询结果一样，但是如果查询"hello world"，结果就相差很大，因为这个输入不会进行分词，就是说查询的时候，是查询字段分词结果中是否有"hello world"的字样，而不是查询字段中包含"hello world"的字样，elasticsearch会对字段内容进行分词，“hello world"会被分成hello和world，不存在"hello world”，因此这里的查询结果会为空。这也是term查询和match的区别。
+      ```json
+      GET user/_search
+      {
+        "query":{
+          "term":{
+            "address":"需要搜索的值"
+          }
+        }
+      }
+      ```
+  2. ### 范围range查询
+      支持的范围格式`gt`, `gte`, `lt`, `lte` 
+      ```json
+      GET user/_search
+      {
+        "query":{
+          "range":{
+            "需要搜索的字段":{
+              "gte":"30",
+              "lte":"40"
+            }
+          }
+        }
+      }
+      ```
+  3. ### exists查询
+      `exists`:查询index中存在此field的记录
+      ```json
+      GET user/_search{
+        "query":{
+          "exists":{
+            "需要搜索的字段":"需要搜索的值"
+          }
+        }
+      }
+      ```
+  4. ### fuzzy模糊查询
+    使用普通的match也可以开启模糊查询
+    ```json
+    GET user/_seach
+    {
+      "query":{
+        "match":{
+          "搜索的字段":{
+            "query":"需要搜索的值",
+            "fuzziness":1,
+          }
+        }
+      }
+    }
+    ```
+    普通的fuzzy查询:
+    ```json
+    GET user/_search
+    {
+      "query":{
+        "fuzzy":{
+          "搜索的字段":{
+            "value":"需要搜寻的值"
+          }
+        }
+      }
+    }
+    ```
++ ## 组合bool查询
+  组合查询的格式:
+  ```json
+    {
+      "query":{
+        "bool":{
+          "must":[],//计分
+          "shout":[],//计分
+          "must_not":[],//不计分
+          "filter":[],//不计分
+        }
+      }
+    }
+  ```
+  示例:
+  ```json
+  GET user/_search
+    {
+      "query": {
+        "bool": {
+          "must": [
+            {
+              "term": {
+                "state": "tn"
+              }
+            },
+            {
+              "range": {
+                "age": {
+                  "gte": 20,
+                  "lte": 30
+                }
+              }
+            }
+          ],
+          "must_not": [
+            {
+              "term": {
+                "gender": "m"
+              }
+            }
+          ],
+          "should": [
+            {
+              "match": {
+                "firstname": "Decker"
+              }
+            }
+          ],
+          "filter": [
+            {
+              "range": {
+                "age": {
+                  "gte": 25,
+                  "lte": 30
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ```
 # 更新数据
 ## 使用POST(PUT) [index]/_doc/id{}的方式更新数据会覆盖原来的数据
 + ## 更新数据的方法
