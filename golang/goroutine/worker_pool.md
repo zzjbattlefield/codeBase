@@ -1,7 +1,13 @@
 <font size="4">
 
 # workerPool
-## work.go
+<font size="5">
+
+***这个pool中包含worker队列和job队列 每个队列中的worker都会争夺job队列里的任务 </br>
+当所有任务都被执行完毕 或者 任务队列被close掉后 worker就会关闭退出***
+</font>
+
+## pool.go
 ```go
     package main
 
