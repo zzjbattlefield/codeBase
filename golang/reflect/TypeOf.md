@@ -1,8 +1,7 @@
 <font size="4">
 
-# 反射
+# reflect.TypeOf
 
-## reflect.Type类型和值
 ```go
 func main(){
     type A = [16]int16
@@ -24,8 +23,6 @@ func main(){
 	// 切片类型和映射类型都是不可比较类型。
 	fmt.Println(tb.Comparable()) // false
 	fmt.Println(tm.Comparable()) // false
-	fmt.Println(ta.Comparable()) // true
-	fmt.Println(tc.Comparable()) // true
 }
 
 ```
@@ -72,7 +69,34 @@ func main(){
 	}
     tx := reflect.TypeOf(x)
 	fmt.Println(tx.Kind())        // struct
-	fmt.Println(tx.NumField())    // 2
+	fmt.Println(tx.NumField())    // 2 NumField 方法返回一个结构体类型的所有字段（包括非导出字段）的数目
 	fmt.Println(tx.Field(1).Name) // i
+	tf, ti := tx.Field(0).Type, tx.Field(1).Type
+	fmt.Println(tf.Kind())               // func
+	fmt.Println(tf.IsVariadic())         // 函数最后的入参是否为可变参数 false
+	fmt.Println(tf.NumIn(), tf.NumOut()) // 2 1
+	t0, t1, t2 := tf.In(0), tf.In(1), tf.Out(0)
+	// 下一行打印出：string int bool
+	fmt.Println(t0.Kind(), t1.Kind(), t2.Kind())
+
+	fmt.Println(tf.NumMethod(), ti.NumMethod()) // 1 2 NumMethod返回一个类型的所有导出的方法 不能用来获取一个类型的非导出方法
+	fmt.Println(tf.Method(0).Name)              // M
+	fmt.Println(ti.Method(1).Name)              // m
+	_, ok1 := tf.MethodByName("m")
+	_, ok2 := ti.MethodByName("m")
+	fmt.Println(ok1, ok2) // false true
+
+	type T struct {
+		X    int  `max:"99" min:"0" default:"0"`
+		Y, Z bool `optional:"yes"`
+	}
+	t := reflect.TypeOf(T{})
+	x := t.Field(0).Tag
+	fmt.Println(reflect.TypeOf(x)) // reflect.StructTag
+	// v的类型为string
+	v, present := x.Lookup("max") //获取指定tag值 返回value和ok     
+	fmt.Println(len(v), present)      // 2 true
+	fmt.Println(x.Get("max"))         // 99
+	fmt.Println(x.Lookup("optional")) //  false
 }
 ```
