@@ -78,3 +78,26 @@ func TestFastSearch(t *testing.T) {
 	log.Println(list)
 }
 ```
+
+## 选择排序
+
+```go
+func choseSort(list []int) {
+	if len(list) == 0 {
+		return
+	}
+	for i := 0; i < len(list); i++ {
+		target := i
+		for j := i + 1; j < len(list); j++ {
+			if list[target] > list[j] {
+				target = j
+			}
+		}
+		list[i], list[target] = swap(list[i], list[target])
+	}
+}
+
+func swap(i, k int) (int, int) {
+	return k, i
+}
+```
