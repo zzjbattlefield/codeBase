@@ -72,3 +72,31 @@ func isValid(s string) bool {
 	return stack.Size == 0
 }
 ```
+
+## 用slice实现
+
+```go
+
+type Item interface{}
+
+type ItemStack struct {
+	items []Item
+}
+
+func NewStack() *ItemStack {
+	return &ItemStack{[]Item{}}
+}
+
+func (s *ItemStack) Pop() Item {
+	if len(s.items) == 0 {
+		return nil
+	}
+	item := s.items[len(s.items)-1]
+	s.items = s.items[0 : len(s.items)-1]
+	return item
+}
+
+func (s *ItemStack) Push(v interface{}) {
+	s.items = append(s.items, v)
+}
+```
